@@ -28,7 +28,8 @@ async function sendEmailWithAttachment(to, subject, content, attachment) {
     mailOptions.attachments = [
       {
         filename: attachment.filename,
-        content: Buffer.from(attachment.data),
+        content: Buffer.from(attachment.data).toString('base64'),
+        encoding: 'base64',
       },
     ];
   }
