@@ -2,6 +2,14 @@ import express from 'express';
 import nodemailer from 'nodemailer';
 import cors from 'cors';
 import { Buffer } from 'node:buffer';
+import { createClient } from '@supabase/supabase-js';
+
+// ⚠️ Khởi tạo Supabase client với URL & Service Role Key từ biến môi trường
+const supabase = createClient(
+  process.env.SB_URL,
+  process.env.SB_SERVICE_ROLE_KEY
+);
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
