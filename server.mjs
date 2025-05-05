@@ -16,6 +16,25 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+async function sendEmailWithAttachment(to, subject, content, attachment) {
+  const mailOptions = {
+    from: '"Daily Bot" <tai25062006z@gmail.com>',
+    to,
+    subject,
+    text: content,
+  };
+
+  if (attachment) {
+    mailOptions.attachments = [
+      {
+        filename: attachment.filename,
+        content: Buffer.from(attachment.data),
+      },
+    ];
+  }
+
+  await transporter.sendMail(mailOptions);
+}
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
