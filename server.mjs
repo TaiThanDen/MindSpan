@@ -1,6 +1,7 @@
 import express from 'express';
-const nodemailer = require('nodemailer');
-const cors = require('cors');
+import nodemailer from 'nodemailer';
+import cors from 'cors';
+import { Buffer } from 'node:buffer';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
