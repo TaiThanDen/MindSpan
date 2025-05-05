@@ -18,29 +18,70 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post('/send-email', async (req, res) => {
-  const { to, subject, text, attachment } = req.body;
+  const { user_id } = req.body;
 
-  const mailOptions = {
-    from: `"Daily Bot" <tai25062006z@gmail.com>`,
-    to,
-    subject,
-    text,
-  };
-
-  if (attachment) {
-    mailOptions.attachments = [
-      {
-        filename: attachment.filename,
-        content: Buffer.from(attachment.data, 'base64'),
-      },
-    ];
-  }
+  if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
 
   try {
-    await transporter.sendMail(mailOptions);
+    // Lấy setting người dùng
+    const { data: setting, error: settingErr } = await supabase
+      .from('email_settings')
+      .select('*')
+      .eq('user_id', user_id)
+      .single();
+    if (settingErr || !setting) throw new Error('Email setting not found');
+
+    // Lấy các files từ các folders đã chọn
+    const { data: files, error: filesErr } = await supabase
+      .from('files')
+      .select('*')
+      .in('folder_id', setting.selected_folders)
+      .eq('user_id', user_id);
+    if (filesErr || !files?.length) throw new Error('No files available');
+
+    // Chọn file ngẫu nhiên
+    const randomFile = files[Math.floor(Math.random() * files.length)];
+
+    // Lấy tên folder
+    const { data: folder } = await supabase
+      .from('folders')
+      .select('name')
+      .eq('id', randomFile.folder_id)
+      .single();
+
+    // Lấy email từ auth
+    const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+    const userEmail = userData?.user?.email;
+    if (!userEmail) throw new Error('User email not found');
+
+    // Chuẩn bị nội dung
+    let attachment;
+    let emailText = randomFile.content || '[No text content]';
+
+    if (randomFile.storage_path) {
+      const { data: fileBin, error } = await supabase.storage
+        .from('mindspandb')
+        .download(randomFile.storage_path);
+      if (error) throw error;
+
+      const arrayBuffer = await fileBin.arrayBuffer();
+      attachment = {
+        filename: randomFile.name,
+        data: new Uint8Array(arrayBuffer),
+      };
+    }
+
+    // Gửi mail
+    await sendEmailWithAttachment(
+      userEmail,
+      `Daily Review: ${folder?.name || 'Folder'} - ${randomFile.name}`,
+      emailText,
+      attachment
+    );
+
     res.json({ success: true });
   } catch (err) {
-    console.error('Gửi mail thất bại:', err.message);
+    console.error('Lỗi gửi email:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
