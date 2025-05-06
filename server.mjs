@@ -100,12 +100,20 @@ app.post('/send-email', async (req, res) => {
     }
 
     // Gửi mail
-    await sendEmailWithAttachment(
-      userEmail,
-      `Daily Review: ${folder?.name || 'Folder'} - ${randomFile.name}`,
-      emailText,
-      attachment
-    );
+// Gửi mail
+await sendEmailWithAttachment(
+  userEmail,
+  `Daily Review: ${folder?.name || 'Folder'} - ${randomFile.name}`,
+  emailText,
+  attachment
+);
+
+// Lưu log để đồng bộ Daily Review
+await supabase.from('daily_reviews').insert({
+  user_id,
+  file_id: randomFile.id,
+  sent_at: new Date().toISOString(),
+});
 
     res.json({ success: true });
   } catch (err) {
