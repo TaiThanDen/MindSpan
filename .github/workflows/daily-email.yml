@@ -1,0 +1,13 @@
+name: Send Daily Emails
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # chạy mỗi 5 phút
+  workflow_dispatch:      # cho phép test thủ công từ GitHub UI
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Daily Email API
+        run: curl -X POST https://mindspan-9wi0.onrender.com/api/send-daily-emails
